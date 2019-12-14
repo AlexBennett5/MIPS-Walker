@@ -6,26 +6,34 @@
 	wall_msg: .asciiz "Ouch! Your character ran directly into a wall. Please consider not doing that.\n"
 	input_error_msg: .asciiz "That's not a valid input, friend\n"
 	current_pos_msg: .asciiz "Your current position is "
+	monster_msg1: .asciiz "You ran into a monster!"
+	monster_msg2: .asciiz "[MONSTER!]"
 	
 .text
 
+# TODO: Add monster move, monster check, and monster msg logic
+
 # Variables
-# s0 = X position
-# s1 = Y position
+# s0 = X position of player
+# s1 = Y position of player
 # s2 = X max
 # s3 = Y max
+# s4 = X position of monster
+# s5 = Y position of monster
 
-# TODO: Test the position checker & movement options
 
 main:
 	
 	la $a0, open_msg
 	jal print_str
-	li $s0, 0
-	li $s1, 0
+	li $s0, 1
+	li $s1, 1
 	
-	li $s2, 5
-	li $s3, 5
+	li $s2, 6
+	li $s3, 6
+	
+	li $s4, 3
+	li $s5, 3
 	
 dir_loop:
 
@@ -50,22 +58,37 @@ dir_loop:
 	
 move_north:
 
+	addi $s1, $s1, 1
+	jal check_pos
 	j dir_loop
 
 move_south:
 
+	addi $s1, $s1, -1
+	jal check_pos
 	j dir_loop
 
 move_east:
 
+	addi $s0, $s0, 1
+	jal check_pos
+	j dir_loop
+
 move_west:
 
+	addi $s0, $s0, -1
+	jal check_pos
+	j dir_loop
 
 
 check_pos:
-	slti $t0, $zero, $s0
+
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)	
+
+	slt $t0, $zero, $s0
 	beq $t0, $zero, wall_x_low
-	slti $t0, $zero, $s0
+	slt $t0, $zero, $s1
 	beq $t0, $zero, wall_y_low
 	slt $t0, $s0, $s2
 	beq $t0, $zero, wall_x_high
@@ -91,16 +114,24 @@ wall_y_high:
 	
 check_pos_msg:
 	la $a0, wall_msg
-	print_str
+	jal print_str
 	
 check_pos_end:
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
 	jr $ra
 	
 
 print_str:
 
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+
 	li $v0, 4
 	syscall
+	
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
 	jr $ra
 
 print_pos:
